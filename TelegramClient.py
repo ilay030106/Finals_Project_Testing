@@ -3,7 +3,9 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, MessageHandler, CommandHandler, ContextTypes, filters, BaseHandler, CallbackQueryHandler
 )
+from typing import   Iterable
 from config import TELEGRAM_BOT_TOKEN
+
 class TelegramClient:
     _instance = None
     _initialized = False
@@ -19,9 +21,9 @@ class TelegramClient:
         if not TELEGRAM_BOT_TOKEN:
             raise ValueError("Telegram Bot token not found in env variables")
         
-        self.app =Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+        self.app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
         
-        self.last_messages= {}
+        self.last_messages = {}
         
         TelegramClient._initialized = True
 
@@ -82,4 +84,15 @@ class TelegramClient:
     def add_error_handler(self,callback):
         self.app.add_error_handler(callback)
     
-
+    @staticmethod
+    def inline_btns_row(self,buttons:Iterable[tuple[str, str]]):
+        return [InlineKeyboardButton(text=text,callback_data=data) 
+                for btn in buttons 
+                for text,data in self._make_button(btn)]
+    
+    @staticmethod
+    def inline_kb(kb):
+        return InlineKeyboardMarkup([TelegramClient.inline_btns_row(row) for row in kb])
+    
+    def _make_button(btn):
+        return btn if isinstance(btn,(tuple,list)) and len(btn)==2 else (str(btn),str(btn))
