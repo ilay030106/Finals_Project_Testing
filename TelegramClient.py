@@ -27,7 +27,7 @@ class TelegramClient:
         
         TelegramClient._initialized = True
 
-    async def send_message(self,chat_id,msg,reply_markup,parse_mode):
+    async def send_message(self,chat_id,msg,reply_markup=None,parse_mode=None):
         await self.app.bot.send_message(chat_id=chat_id,
                                         text=msg,
                                         reply_markup=reply_markup
@@ -84,15 +84,25 @@ class TelegramClient:
     def add_error_handler(self,callback):
         self.app.add_error_handler(callback)
     
+    async def handle_message(self, update, context):
+        """Default text handler: store user's last message (no business logic)."""
+        if not update.effective_user or not update.message:
+            return
+        user_id = update.effective_user.id
+        text = update.message.text or ""
+        self.last_messages[user_id] = text
+        
+    
     @staticmethod
-    def inline_btns_row(self,buttons:Iterable[tuple[str, str]]):
+    def inline_btns_row(buttons:Iterable[tuple[str, str]]):
         return [InlineKeyboardButton(text=text,callback_data=data) 
                 for btn in buttons 
-                for text,data in self._make_button(btn)]
+                for text,data in ([btn] if isinstance(btn,(tuple,list)) and len(btn)==2 else [(str(btn), str(btn))])]
     
     @staticmethod
     def inline_kb(kb):
         return InlineKeyboardMarkup([TelegramClient.inline_btns_row(row) for row in kb])
     
+    @staticmethod
     def _make_button(btn):
         return btn if isinstance(btn,(tuple,list)) and len(btn)==2 else (str(btn),str(btn))
