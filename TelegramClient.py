@@ -97,7 +97,7 @@ class TelegramClient:
     def inline_btns_row(buttons:Iterable[tuple[str, str]]):
         return [InlineKeyboardButton(text=text,callback_data=data) 
                 for btn in buttons 
-                for text,data in ([btn] if isinstance(btn,(tuple,list)) and len(btn)==2 else [(str(btn), str(btn))])]
+                for text,data in (TelegramClient._make_button(btn))]
     
     @staticmethod
     def inline_kb(kb):
