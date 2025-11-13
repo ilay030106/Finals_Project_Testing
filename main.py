@@ -10,6 +10,7 @@ class MainClient:
         self.client.add_command_handler("start", self.cmd_start)
         self.client.add_text_handler(self.on_text)
         self.client.add_error_handler(self.on_error)
+        self.client.add_callback_query_handler(self.on_callback)
     
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command - send a welcome message with inline keyboard"""
@@ -64,6 +65,44 @@ class MainClient:
         print(f"Error occurred: {error}")
         if DEBUG and update:
             print(f"Update that caused error: {update}")
+    
+    async def on_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle button callbacks"""
+        query = update.callback_query
+        
+        if not query or not update.effective_user:
+            return
+        
+        await query.answer()
+        data = query.data
+        user_id = update.effective_user.id 
+        
+        if DEBUG:
+            print(f"Callback from {user_id}: {data}")
+
+        match data:
+            case "btn1":
+                await self.client.send_message(
+                    chat_id=user_id,
+                    msg="You Pressed Button 1",
+                    reply_markup=None,
+                    parse_mode=None
+                )
+            case "btn2":
+                await self.client.send_message(
+                    chat_id=user_id,
+                    msg="You Pressed Button 2",
+                    reply_markup=None,
+                    parse_mode=None
+                )
+            case _: 
+                await self.client.send_message(
+                    chat_id=user_id,
+                    msg=f"Unknown button: {data}",
+                    reply_markup=None,
+                    parse_mode=None
+                )
+
 
 if __name__ == "__main__":
     print("Starting Telegram Bot...")

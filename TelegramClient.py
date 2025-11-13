@@ -84,6 +84,10 @@ class TelegramClient:
     def add_error_handler(self,callback):
         self.app.add_error_handler(callback)
     
+    def add_callback_query_handler(self, callback, pattern = None):
+        """Convenience to add a CallbackQueryHandler."""
+        self.app.add_handler(CallbackQueryHandler(callback, pattern=pattern))
+    
     async def handle_message(self, update, context):
         """Default text handler: store user's last message (no business logic)."""
         if not update.effective_user or not update.message:
@@ -97,7 +101,7 @@ class TelegramClient:
     def inline_btns_row(buttons:Iterable[tuple[str, str]]):
         return [InlineKeyboardButton(text=text,callback_data=data) 
                 for btn in buttons 
-                for text,data in (TelegramClient._make_button(btn))]
+                for text,data in [TelegramClient._make_button(btn)]]
     
     @staticmethod
     def inline_kb(kb):
