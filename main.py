@@ -22,7 +22,6 @@ class MainClient:
         username = update.effective_user.username or "No username"
         first_name = update.effective_user.first_name or "No name"
         
-        # Store in app context
         app_context['user_id'] = user_id
         app_context['username'] = username
         
@@ -34,7 +33,6 @@ class MainClient:
         
         welcome_msg = MAIN_MENU['title']
         
-        # Now you can send without chat_id
         await self.client.send_message(
             msg=welcome_msg,
             reply_markup=reply_markup,
@@ -82,26 +80,25 @@ class MainClient:
             print(f"Callback from {user_id}: {data}")
 
         match data:
-            case "btn1":
+            case "reports":
                 await self.client.send_message(
-                    chat_id=user_id,
-                    msg="You Pressed Button 1",
-                    reply_markup=None,
-                    parse_mode=None
+                    msg="You Pressed Button reports",
                 )
-            case "btn2":
+            case "settings":
                 await self.client.send_message(
-                    chat_id=user_id,
-                    msg="You Pressed Button 2",
-                    reply_markup=None,
-                    parse_mode=None
+                    msg="You Pressed Button settings",
+                )
+            case "monitor_and_status":
+                await self.client.send_message(
+                    msg="You Pressed Button monitor_and_status",
+                )
+            case "train_control":
+                await self.client.send_message(
+                    msg="You Pressed Button train_control",
                 )
             case _: 
                 await self.client.send_message(
-                    chat_id=user_id,
                     msg=f"Unknown button: {data}",
-                    reply_markup=None,
-                    parse_mode=None
                 )
 
 
