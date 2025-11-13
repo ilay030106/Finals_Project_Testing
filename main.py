@@ -2,7 +2,7 @@ from TelegramClient import TelegramClient
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update
-from config import DEBUG
+from config import DEBUG,MAIN_MENU
 from app_context import app_context
 
 class MainClient:
@@ -29,14 +29,10 @@ class MainClient:
         if DEBUG:
             print(f"User started bot: {user_id} - {username} - {first_name}")
         
-        # Test inline keyboard with buttons
-        keyboard = [
-            [("Button 1", "btn1"), ("Button 2", "btn2")],
-            ["Single Button"]  # Test single value fallback
-        ]
-        reply_markup = TelegramClient.inline_kb(keyboard)
+
+        reply_markup = TelegramClient.inline_kb(MAIN_MENU['buttons'])
         
-        welcome_msg = f"👋 Hello {first_name}!\n\nWelcome to the test bot. Try the buttons below:"
+        welcome_msg = MAIN_MENU['title']
         
         # Now you can send without chat_id
         await self.client.send_message(
