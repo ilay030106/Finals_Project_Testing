@@ -5,6 +5,7 @@ from telegram.ext import (
 )
 from typing import   Iterable
 from config import TELEGRAM_BOT_TOKEN
+from app_context import app_context
 
 class TelegramClient:
     _instance = None
@@ -27,7 +28,9 @@ class TelegramClient:
         
         TelegramClient._initialized = True
 
-    async def send_message(self,chat_id,msg,reply_markup=None,parse_mode=None):
+    async def send_message(self,msg,chat_id=None,reply_markup=None, parse_mode=None):
+        if chat_id is None:
+            chat_id = app_context.get('user_id')
         await self.app.bot.send_message(chat_id=chat_id,
                                         text=msg,
                                         reply_markup=reply_markup
@@ -95,6 +98,7 @@ class TelegramClient:
         user_id = update.effective_user.id
         text = update.message.text or ""
         self.last_messages[user_id] = text
+        
         
     
     @staticmethod

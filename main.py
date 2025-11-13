@@ -3,6 +3,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update
 from config import DEBUG
+from app_context import app_context
 
 class MainClient:
     def __init__(self):
@@ -21,6 +22,10 @@ class MainClient:
         username = update.effective_user.username or "No username"
         first_name = update.effective_user.first_name or "No name"
         
+        # Store in app context
+        app_context['user_id'] = user_id
+        app_context['username'] = username
+        
         if DEBUG:
             print(f"User started bot: {user_id} - {username} - {first_name}")
         
@@ -33,8 +38,8 @@ class MainClient:
         
         welcome_msg = f"👋 Hello {first_name}!\n\nWelcome to the test bot. Try the buttons below:"
         
+        # Now you can send without chat_id
         await self.client.send_message(
-            chat_id=user_id,
             msg=welcome_msg,
             reply_markup=reply_markup,
             parse_mode=ParseMode.HTML
