@@ -6,14 +6,17 @@
 Finals_Project_Testing/
 ├── handlers/               # Handler modules
 │   ├── base_handler.py    # Base class for all handlers
-│   └── menu_handlers.py   # Menu button handlers
-├── menus/                  # Menu system
-│   └── menu.py            # Menu builder classes
+│   └── menu_handlers.py   # Legacy menu button handlers
+├── menus/                  # Unified menu system
+│   ├── base_menu.py       # BaseMenu class - common menu functionality
+│   ├── base_handler.py    # BaseHandler class - callback registration
+│   ├── menu.py            # Menu builder classes
+│   └── main_menu.py       # MainMenu class - unified menu + handlers
 ├── state/                  # State management
 │   └── user_session.py    # User sessions
 ├── config/                 # Configuration
 │   ├── settings.py        # Settings management
-│   └── menus.py           # Menu definitions
+│   └── menus.py           # Legacy menu definitions (being phased out)
 ├── utils/                  # Utilities
 │   ├── logging_config.py  # Logging setup
 │   ├── response_builder.py # Response formatting
@@ -30,7 +33,7 @@ Finals_Project_Testing/
 ### Add a New Menu Button Handler
 
 ```python
-# In handlers/menu_handlers.py
+# In the appropriate menu class (e.g., menus/main_menu.py)
 
 @callback_handler("New Button")
 async def handle_new_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -39,6 +42,8 @@ async def handle_new_button(self, update: Update, context: ContextTypes.DEFAULT_
     response = ResponseBuilder.success("Button clicked!")
     await self.client.send_message(msg=response['text'])
 ```
+
+**Note**: Handlers are now part of their respective menu classes. Add the button to the menu's `__init__` rows and implement the handler method in the same class.
 
 ### Add a New Command
 
@@ -56,7 +61,72 @@ async def cmd_stats(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 ```
 
-### Create a New Menu
+### Create a New Menu (Unified Class Pattern)
+
+```python
+# In menus/training_menu.py
+
+from menus.base_menu import BaseMenu
+from utils.telegram_client_utils import callback_handler
+from utils.response_builder import ResponseBuilder
+import logging
+
+logger = logging.getLogger(__name__)
+
+class TrainingMenu(BaseMenu):
+    """Training control menu - unified menu definition and handlers"""
+    
+    def __init__(self, client):
+        """Initialize training menu with definition and handlers
+        
+        Args:
+            client: TelegramClient instance
+        """
+        super().__init__(
+            client,
+            "🏋️ Training Control Center",
+            [
+                ["Start Training", "Stop Training"],
+                ["View Progress", "Training Settings"],
+                ["Back to Main"]
+            ]
+        )
+    
+    @callback_handler("Start Training")
+    async def handle_start_training(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle start training button"""
+        logger.info(f"User {update.effective_user.id} started training")
+        response = ResponseBuilder.success("Training started successfully!")
+        await self.client.send_message(msg=response['text'])
+    
+    @callback_handler("Stop Training")
+    async def handle_stop_training(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle stop training button"""
+        logger.info(f"User {update.effective_user.id} stopped training")
+        response = ResponseBuilder.warning("Training stopped")
+        await self.client.send_message(msg=response['text'])
+    
+    @callback_handler("View Progress")
+    async def handle_view_progress(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle view progress button"""
+        progress = "Training Progress: 75% complete"
+        response = ResponseBuilder.info(progress)
+        await self.client.send_message(msg=response['text'])
+    
+    @callback_handler("Back to Main")
+    async def handle_back_to_main(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle back to main menu"""
+        # Import here to avoid circular imports
+        from menus.main_menu import MainMenu
+        
+        main_menu = MainMenu(self.client)
+        await main_menu.show()
+
+# In main.py - register the new menu
+self.training_menu = TrainingMenu(self.client)
+```
+
+### Legacy Menu Creation (Separate Definition - Being Phased Out)
 
 ```python
 # In config/menus.py
@@ -266,6 +336,47 @@ menu.validate()
 reply_markup = TelegramClient.inline_kb(menu.get_buttons())
 ```
 
+## Unified Menu Class Pattern
+
+The project uses a unified architecture where each menu is a class that inherits from `BaseMenu` and contains both the menu definition and its handlers.
+
+### Base Classes
+
+- **BaseHandler**: Provides callback registration functionality
+- **BaseMenu**: Extends BaseHandler, provides menu setup and display
+
+### Menu Class Structure
+
+```python
+from menus.base_menu import BaseMenu
+from utils.telegram_client_utils import callback_handler
+
+class MyMenu(BaseMenu):
+    def __init__(self, client):
+        # Define menu structure in super().__init__
+        super().__init__(
+            client,
+            "Menu Title",
+            [
+                ["Button 1", "Button 2"],
+                ["Button 3"]
+            ]
+        )
+    
+    @callback_handler("Button 1")
+    async def handle_button1(self, update, context):
+        # Handler implementation
+        pass
+```
+
+### Benefits
+
+- **Unified**: Menu definition and handlers in one place
+- **Inheritance**: No code duplication
+- **Modular**: Easy to create new menus
+- **Auto-registration**: Handlers automatically registered
+- **Type-safe**: Consistent interface through inheritance
+
 ## Testing Commands
 
 ```bash
@@ -283,8 +394,10 @@ python main.py
 
 ## Next Steps
 
-1. Add more handler modules (reports_handlers.py, settings_handlers.py)
-2. Create additional menus
-3. Implement conversation flows using session states
-4. Add database integration
-5. Add tests
+1. Create additional unified menu classes (TrainingMenu, SettingsMenu, ReportsMenu)
+2. Implement actual menu navigation logic between menus
+3. Add menu summary functionality to BaseMenu
+4. Implement conversation flows using session states
+5. Add database integration
+6. Add tests for menu classes
+7. Migrate remaining legacy handlers to unified menu classes

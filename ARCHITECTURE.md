@@ -41,60 +41,80 @@ handlers/
 
 ---
 
-## 2. Menu Management System
+## 2. Unified Menu System
 
 ### Structure
 
 ```
 menus/
 ├── __init__.py
-└── menu.py              # Menu and MenuButton classes
+├── base_menu.py         # BaseMenu class - common menu functionality
+├── base_handler.py      # BaseHandler class - callback registration
+├── menu.py              # Menu and MenuButton classes (builder pattern)
+└── main_menu.py         # MainMenu class - unified menu + handlers
 
-config/
-└── menus.py             # Menu definitions
+handlers/
+├── __init__.py
+├── base_handler.py      # Base class with common functionality
+└── menu_handlers.py     # Legacy handlers (being phased out)
 ```
 
 ### Flow
 
-1. **MenuButton dataclass**:
+1. **BaseHandler** provides common functionality:
+   - Automatic callback registration via `_register_callbacks()`
+   - Error handling helper methods
+   - Logger access
+   - Reference to TelegramClient
 
-   - Represents a single button with label and callback_data
-   - `to_tuple()` method for telegram compatibility
+2. **BaseMenu** extends BaseHandler:
+   - Inherits callback registration from BaseHandler
+   - Provides menu setup and display functionality
+   - `show()` method to display the menu
+   - `add_row()` method to dynamically add menu rows
 
-2. **Menu class** (Builder pattern):
-
+3. **Menu class** (Builder pattern):
    ```python
    menu = Menu("Title")
        .add_button("Label")  # Uses label as callback_data
        .add_row(["Label1", "Label2"])  # Both labels used as callback_data
    ```
-
    - Fluent API for building menus
    - **Labels are used directly as callback_data** (no transformation)
    - Optional explicit callback_data: `.add_button("Label", "custom_data")`
    - Validation of menu structure
-   - Convert to dict format for backward compatibility
 
-3. **Usage in config/menus.py**:
+4. **Unified Menu Classes** (e.g., MainMenu):
    ```python
-   MAIN_MENU = Menu("Welcome...")
-       .add_row(["Monitoring And Status", "Training Control"])
-       .add_row(["Reporting And Visualization", "Settings"])
+   class MainMenu(BaseMenu):
+       def __init__(self, client):
+           super().__init__(
+               client,
+               "Welcome To The Control Center!",
+               [
+                   ["Monitoring And Status", "Training Control"],
+                   ["Reporting And Visualization", "Settings"]
+               ]
+           )
+       
+       @callback_handler("Monitoring And Status")
+       async def handle_monitoring(self, update, context):
+           # Handler implementation
+           pass
    ```
-   - "Monitoring And Status" → `Monitoring And Status`
-   - "Training Control" → `Training Control`
-   - "Reporting And Visualization" → `Reporting And Visualization`
-   - "Settings" → `Settings`
+   - Each menu class inherits from BaseMenu
+   - Defines its own menu structure in `__init__`
+   - Implements its own button handlers with `@callback_handler`
+   - Auto-registers handlers on initialization
 
 ### Benefits
 
-- **Simple and consistent** - Label is the callback_data (no transformation)
-- **Easy to understand** - What you see is what you get
-- Type-safe menu creation
-- Validation catches errors early
-- Cleaner syntax than raw dictionaries
-- Easy to compose complex menus
-- Duplicate callback_data detection
+- **Unified Architecture**: Menu definition and handlers in one class
+- **Inheritance-based**: Eliminates code duplication through BaseMenu/BaseHandler
+- **Modular**: Easy to create new menus (TrainingMenu, SettingsMenu, etc.)
+- **Type-safe**: Menu creation with validation
+- **Auto-registration**: Handlers automatically registered via decorators
+- **Separation of Concerns**: Each menu manages its own logic
 
 ---
 
@@ -352,7 +372,9 @@ setup_logging() - Configure logging
   ↓
 MainClient.__init__()
   ├→ TelegramClient (singleton)
-  ├→ MenuHandlers (auto-register callbacks)
+  ├→ MainMenu(client) - Create unified menu instance
+  │   ├→ BaseMenu.__init__() - Setup menu structure
+  │   └→ BaseHandler._register_callbacks() - Auto-register handlers
   ├→ CommandRegistry (auto-register commands)
   └→ Register telegram handlers
   ↓
@@ -368,9 +390,9 @@ session_manager.get_session(user_id) - Get/create session
   ↓
 session.set_menu("MAIN_MENU") - Track menu
   ↓
-MAIN_MENU.get_buttons() - Get menu (labels used as callback_data)
+main_menu.show() - Display main menu
   ↓
-TelegramClient.inline_kb() - Create keyboard
+BaseMenu.show() - Get menu buttons and format response
   ↓
 ResponseBuilder.menu() - Format response
   ↓
@@ -392,55 +414,59 @@ session.update_activity() - Track activity
   ↓
 app_context.get_callback_handler("Monitoring And Status") - Get handler
   ↓
-MenuHandlers.handle_monitor_status() - Execute handler
+MainMenu.handle_monitoring() - Execute handler
   ↓
 ResponseBuilder.info() - Format response
   ↓
 send_message() - Send to user
 ```
 
-### 3a. Callback Data Generation & Matching Flow
+### 3a. Unified Menu Class Flow
 
 ```
-STEP 1 - MENU DEFINITION (config/menus.py):
-  .add_row(["Monitoring And Status", "Training Control"])
+STEP 1 - MENU CLASS DEFINITION (menus/main_menu.py):
+class MainMenu(BaseMenu):
+    def __init__(self, client):
+        super().__init__(
+            client,
+            "Welcome To The Control Center!",
+            [["Monitoring And Status", "Training Control"]]
+        )
   ↓
-  Menu.add_row() → uses each label directly as callback_data
+  BaseMenu.__init__() → Menu() → add_row() → validate()
   ↓
-  "Monitoring And Status" → "Monitoring And Status"
-  "Training Control" → "Training Control"
+  Menu structure created with buttons using labels as callback_data
 
-STEP 2 - HANDLER REGISTRATION (handlers/menu_handlers.py):
-  @callback_handler("Monitoring And Status")
-  async def handle_monitor_status(...):
+STEP 2 - HANDLER IMPLEMENTATION:
+    @callback_handler("Monitoring And Status")
+    async def handle_monitoring(self, update, context):
+        # Handler logic here
   ↓
   Decorator → find_callback_data_from_menu()
   ↓
-  Searches MAIN_MENU for "Monitoring And Status" label
+  Searches menu for "Monitoring And Status" label
   ↓
-  Finds button: ("Monitoring And Status", "Monitoring And Status")
+  Finds button with callback_data: "Monitoring And Status"
   ↓
-  Returns callback_data: "Monitoring And Status"
-  ↓
-  Attaches: handle_monitor_status._callback_data = "Monitoring And Status"
+  Attaches: handle_monitoring._callback_data = "Monitoring And Status"
 
-STEP 3 - AUTO-REGISTRATION (MenuHandlers.__init__):
-  self._register_callbacks()
+STEP 3 - AUTO-REGISTRATION (MainMenu.__init__):
+  BaseHandler.__init__() → self._register_callbacks()
   ↓
   Scans all methods for _callback_data attribute
   ↓
-  Finds: handle_monitor_status._callback_data = "Monitoring And Status"
+  Finds: handle_monitoring._callback_data = "Monitoring And Status"
   ↓
-  Registers: app_context["Monitoring And Status"] = handle_monitor_status
+  Registers: app_context["Monitoring And Status"] = handle_monitoring
 
 STEP 4 - USER INTERACTION:
   User clicks button → Telegram sends data="Monitoring And Status"
   ↓
   app_context.get_callback_handler("Monitoring And Status")
   ↓
-  Returns: handle_monitor_status
+  Returns: handle_monitoring
   ↓
-  Execute: await handle_monitor_status(update, context)
+  Execute: await handle_monitoring(update, context)
 ```
 
 ### 4. Error Occurs
@@ -461,42 +487,72 @@ send_message() - Inform user
 
 ## Key Improvements Summary
 
-1. **Modular Architecture**: Handlers separated into modules
-2. **Type Safety**: Menu and Settings classes with validation
-3. **State Management**: Per-user sessions with tracking
-4. **Configuration**: Centralized settings from environment
-5. **Logging**: Structured logging instead of prints
-6. **Consistent Responses**: ResponseBuilder for uniform UX
-7. **Auto-Registration**: Decorators for commands and callbacks
+1. **Unified Menu Architecture**: Menu definitions and handlers combined in single classes
+2. **Inheritance-based Design**: BaseMenu/BaseHandler eliminate code duplication
+3. **Modular Handler System**: Separate handler modules with shared base functionality
+4. **Type Safety**: Menu and Settings classes with validation
+5. **State Management**: Per-user sessions with tracking
+6. **Configuration**: Centralized settings from environment
+7. **Logging**: Structured logging instead of prints
+8. **Consistent Responses**: ResponseBuilder for uniform UX
+9. **Auto-Registration**: Decorators for commands and callbacks
 
 ---
 
 ## Migration Guide
 
-### Old Code:
+### Old Code (Separate Menu Definitions and Handlers):
 
 ```python
-# In main.py
-@callback_handler("reports")
-async def handle_reports(self, update, context):
-    await self.client.send_message(msg="You pressed reports")
+# config/menus.py
+MAIN_MENU = Menu("Welcome...")
+    .add_row(["Monitoring And Status", "Training Control"])
+    .add_row(["Reporting And Visualization", "Settings"])
+
+# handlers/menu_handlers.py
+@callback_handler("Monitoring And Status")
+async def handle_monitor_status(self, update, context):
+    await self.client.send_message(msg="You pressed monitoring")
 ```
 
-### New Code:
+### New Code (Unified Menu Classes):
 
 ```python
-# In handlers/menu_handlers.py
-@callback_handler("Reporting And Visualization")
-async def handle_reports(self, update, context):
-    logger.info(f"User {update.effective_user.id} requested reports")
-    response = ResponseBuilder.info("You pressed: Reporting And Visualization")
-    await self.client.send_message(msg=response['text'])
+# menus/main_menu.py
+from menus.base_menu import BaseMenu
+from utils.telegram_client_utils import callback_handler
+
+class MainMenu(BaseMenu):
+    def __init__(self, client):
+        super().__init__(
+            client,
+            "Welcome To The Control Center!",
+            [
+                ["Monitoring And Status", "Training Control"],
+                ["Reporting And Visualization", "Settings"]
+            ]
+        )
+    
+    @callback_handler("Monitoring And Status")
+    async def handle_monitoring(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        logger.info(f"User {update.effective_user.id} requested monitoring")
+        response = ResponseBuilder.info("You pressed: Monitoring And Status")
+        await self.client.send_message(msg=response['text'])
+    
+    @callback_handler("Training Control")
+    async def handle_training(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        # Training menu logic
+        pass
+
+# main.py
+self.main_menu = MainMenu(self.client)
 ```
 
-### Benefits of Migration:
+### Benefits of Unified Menu Classes:
 
-- Better organization
-- Proper logging
-- Consistent formatting
-- Type hints
-- Error handling
+- **Single Responsibility**: Each menu manages its own definition and handlers
+- **No Code Duplication**: BaseMenu provides common functionality
+- **Easy Extension**: Add new menus by creating new classes
+- **Better Organization**: Related code kept together
+- **Type Safety**: Inheritance ensures consistent interface
+- **Auto-registration**: Handlers automatically registered on instantiation
