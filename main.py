@@ -4,10 +4,9 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update
 from config.settings import get_settings
-from config.menus import MAIN_MENU
 from app_context import app_context
 from state.user_session import session_manager
-from handlers.menu_handlers import MenuHandlers
+from menus.main_menu import MainMenu
 from utils.logging_config import setup_logging
 from utils.response_builder import ResponseBuilder
 from utils.command_registry import CommandRegistry, command_handler
@@ -31,8 +30,11 @@ class MainClient:
         self.client = TelegramClient()
         self.command_registry = CommandRegistry()
         
-        # Initialize handlers
-        self.menu_handlers = MenuHandlers(self.client)
+        # Initialize menus - each menu is self-contained with handlers
+        self.main_menu = MainMenu(self.client)
+        # Add more unified menus here:
+        # self.training_menu = TrainingMenu(self.client)
+        # self.monitoring_menu = MonitoringMenu(self.client)
         
         # Register commands
         self._register_commands()
@@ -81,19 +83,8 @@ class MainClient:
         
         logger.info(f"User started bot: {user_id} - {username} - {first_name}")
         
-        # Build and send menu
-        reply_markup = TelegramClient.inline_kb(MAIN_MENU.get_buttons())
-        response = ResponseBuilder.menu(
-            title=MAIN_MENU.title,
-            keyboard=reply_markup,
-            parse_mode=ParseMode.HTML
-        )
-        
-        await self.client.send_message(
-            msg=response['text'],
-            reply_markup=response['keyboard'],
-            parse_mode=response['parse_mode']
-        )
+        # Show main menu using unified menu class
+        await self.main_menu.show(chat_id=user_id)
     
     @command_handler("help", description="Show available commands")
     async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
