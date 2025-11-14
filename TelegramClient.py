@@ -1,11 +1,18 @@
+"""Telegram client wrapper with singleton pattern"""
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, MessageHandler, CommandHandler, ContextTypes, filters, BaseHandler, CallbackQueryHandler
 )
-from typing import Iterable
-from config import TELEGRAM_BOT_TOKEN
+from typing import Iterable, Optional
+from config.settings import get_settings
 from app_context import app_context
+from utils.telegram_client_utils import make_button
+import logging
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
 
 class TelegramClient:
     _instance = None
@@ -19,14 +26,15 @@ class TelegramClient:
         if TelegramClient._initialized:
             return
         
-        if not TELEGRAM_BOT_TOKEN:
-            raise ValueError("Telegram Bot token not found in env variables")
+        if not settings.telegram_bot_token:
+            raise ValueError("Telegram Bot token not found in environment variables")
         
-        self.app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+        self.app = Application.builder().token(settings.telegram_bot_token).build()
         
         self.last_messages = {}
         
         TelegramClient._initialized = True
+        logger.info("TelegramClient initialized")
 
     async def send_message(self,msg,chat_id=None,reply_markup=None, parse_mode=None):
         if chat_id is None:
@@ -105,12 +113,8 @@ class TelegramClient:
     def inline_btns_row(buttons:Iterable[tuple[str, str]]):
         return [InlineKeyboardButton(text=text,callback_data=data) 
                 for btn in buttons 
-                for text,data in [TelegramClient.__make_button(btn)]]
+                for text,data in [make_button(btn)]]
     
     @staticmethod
     def inline_kb(kb):
-        return InlineKeyboardMarkup([TelegramClient.inline_btns_row(row) for row in kb])
-    
-    
-    def __make_button(btn):
-        return btn if isinstance(btn,(tuple,list)) and len(btn)==2 else (str(btn),str(btn))
+        return InlineKeyboardMarkup([TelegramClient.inline_btns_row(row) for row in kb]) 

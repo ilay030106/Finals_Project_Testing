@@ -1,3 +1,6 @@
+"""Legacy config file - maintained for backward compatibility
+New code should use config.settings and config.menus instead
+"""
 import os
 from dotenv import load_dotenv
 from pathlib import Path
@@ -6,23 +9,12 @@ from pathlib import Path
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-# Time zone setting
-
-# Telegram Bot Configuration
+# Telegram Bot Configuration (legacy)
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-MAIN_MENU={
-    "title" : "Welcome To The Control Center!\n\n Please Choose your Action",
-    "buttons":[
-        [
-         ("Monitoring And Status","monitor_and_status"),
-         ("Training Control","train_control") 
-         ],
+# Import new menu system
+from config.menus import MAIN_MENU as MAIN_MENU_OBJ
 
-         [
-         ("Reporting And Visualization","reports"),
-         ("Settings","settings"),
-         ]
-    ]
-}
+# Legacy dictionary format for backward compatibility
+MAIN_MENU = MAIN_MENU_OBJ.to_dict()
