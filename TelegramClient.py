@@ -3,7 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, MessageHandler, CommandHandler, ContextTypes, filters, BaseHandler, CallbackQueryHandler
 )
-from typing import   Iterable
+from typing import Iterable
 from config import TELEGRAM_BOT_TOKEN
 from app_context import app_context
 
@@ -105,12 +105,12 @@ class TelegramClient:
     def inline_btns_row(buttons:Iterable[tuple[str, str]]):
         return [InlineKeyboardButton(text=text,callback_data=data) 
                 for btn in buttons 
-                for text,data in [TelegramClient._make_button(btn)]]
+                for text,data in [TelegramClient.__make_button(btn)]]
     
     @staticmethod
     def inline_kb(kb):
         return InlineKeyboardMarkup([TelegramClient.inline_btns_row(row) for row in kb])
     
-    @staticmethod
-    def _make_button(btn):
+    
+    def __make_button(btn):
         return btn if isinstance(btn,(tuple,list)) and len(btn)==2 else (str(btn),str(btn))
