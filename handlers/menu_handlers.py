@@ -1,4 +1,4 @@
-"""Menu handlers for main menu buttons"""
+"""Main menu handler - entry point for menu navigation"""
 from telegram import Update
 from telegram.ext import ContextTypes
 from handlers.base_handler import BaseHandler
@@ -9,11 +9,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class MenuHandlers(BaseHandler):
-    """Handlers for main menu button callbacks"""
+class MainMenuHandler(BaseHandler):
+    """Handler for main menu - delegates to specific menu handlers"""
     
     def __init__(self, client):
-        """Initialize menu handlers
+        """Initialize main menu handler
         
         Args:
             client: TelegramClient instance
@@ -23,7 +23,7 @@ class MenuHandlers(BaseHandler):
     
     @callback_handler("Reporting And Visualization")
     async def handle_reports(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle reports button click
+        """Handle reports button - delegates to ReportingMenuHandler
         
         Args:
             update: The update object from Telegram
@@ -35,7 +35,7 @@ class MenuHandlers(BaseHandler):
     
     @callback_handler("Settings")
     async def handle_settings(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle settings button click
+        """Handle settings button - delegates to SettingsMenuHandler
         
         Args:
             update: The update object from Telegram
@@ -47,7 +47,7 @@ class MenuHandlers(BaseHandler):
     
     @callback_handler("Monitoring And Status")
     async def handle_monitor_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle monitor and status button click
+        """Handle monitoring button - delegates to MonitoringMenuHandler
         
         Args:
             update: The update object from Telegram
@@ -59,7 +59,7 @@ class MenuHandlers(BaseHandler):
     
     @callback_handler("Training Control")
     async def handle_train_control(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle train control button click
+        """Handle training button - delegates to TrainingMenuHandler
         
         Args:
             update: The update object from Telegram
@@ -68,3 +68,7 @@ class MenuHandlers(BaseHandler):
         logger.info(f"User {update.effective_user.id} accessed training control")
         response = ResponseBuilder.info("You Pressed Button: Training Control")
         await self.client.send_message(msg=response['text'])
+
+
+# Backward compatibility alias
+MenuHandlers = MainMenuHandler
