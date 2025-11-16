@@ -110,11 +110,27 @@ class TelegramClient:
         
     
     @staticmethod
-    def inline_btns_row(buttons:Iterable[tuple[str, str]]):
-        return [InlineKeyboardButton(text=text,callback_data=data) 
+    def inline_btns_row(buttons: Iterable[tuple[str, str]]):
+        """Create a row of inline buttons.
+        
+        Args:
+            buttons: Iterable of (label, callback_data) tuples
+        
+        Returns:
+            List of InlineKeyboardButton objects
+        """
+        return [InlineKeyboardButton(text=text, callback_data=data) 
                 for btn in buttons 
-                for text,data in [make_button(btn)]]
+                for text, data in [make_button(btn)]]
     
     @staticmethod
     def inline_kb(kb):
+        """Create an inline keyboard markup from button rows.
+        
+        Args:
+            kb: List of rows, where each row is a list of (label, callback_data) tuples
+        
+        Returns:
+            InlineKeyboardMarkup object
+        """
         return InlineKeyboardMarkup([TelegramClient.inline_btns_row(row) for row in kb]) 

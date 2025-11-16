@@ -62,23 +62,27 @@ handlers/
 ### Flow
 
 1. **BaseHandler** provides common functionality:
+
    - Automatic callback registration via `_register_callbacks()`
    - Error handling helper methods
    - Logger access
    - Reference to TelegramClient
 
 2. **BaseMenu** extends BaseHandler:
+
    - Inherits callback registration from BaseHandler
    - Provides menu setup and display functionality
    - `show()` method to display the menu
    - `add_row()` method to dynamically add menu rows
 
 3. **Menu class** (Builder pattern):
+
    ```python
    menu = Menu("Title")
        .add_button("Label")  # Uses label as callback_data
        .add_row(["Label1", "Label2"])  # Both labels used as callback_data
    ```
+
    - Fluent API for building menus
    - **Labels are used directly as callback_data** (no transformation)
    - Optional explicit callback_data: `.add_button("Label", "custom_data")`
@@ -96,7 +100,7 @@ handlers/
                    ["Reporting And Visualization", "Settings"]
                ]
            )
-       
+
        @callback_handler("Monitoring And Status")
        async def handle_monitoring(self, update, context):
            # Handler implementation
@@ -532,13 +536,13 @@ class MainMenu(BaseMenu):
                 ["Reporting And Visualization", "Settings"]
             ]
         )
-    
+
     @callback_handler("Monitoring And Status")
     async def handle_monitoring(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         logger.info(f"User {update.effective_user.id} requested monitoring")
         response = ResponseBuilder.info("You pressed: Monitoring And Status")
         await self.client.send_message(msg=response['text'])
-    
+
     @callback_handler("Training Control")
     async def handle_training(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Training menu logic

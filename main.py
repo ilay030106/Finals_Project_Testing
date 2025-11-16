@@ -152,7 +152,13 @@ class MainClient:
                 logger.error(f"Failed to send error message: {e}")
     
     async def on_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle button callbacks dynamically using callback registry
+        """Handle button callbacks using the callback registry.
+        
+        Flow:
+            1. User clicks a button in Telegram
+            2. Telegram sends callback_query with callback_data (e.g., "Monitoring And Status")
+            3. We look up the handler in app_context using callback_data as the key
+            4. Execute the handler method
         
         Args:
             update: The update object from Telegram
@@ -164,27 +170,27 @@ class MainClient:
             return
         
         await query.answer()
-        data = query.data
+        callback_data = query.data
         user_id = update.effective_user.id
         
         # Update session activity
         session = session_manager.get_session(user_id)
         session.update_activity()
         
-        logger.debug(f"Callback from {user_id}: {data}")
+        logger.debug(f"Callback from user {user_id}: '{callback_data}'")
         
         # Get handler from app_context registry
-        handler = app_context.get_callback_handler(data)
+        handler = app_context.get_callback_handler(callback_data)
         if handler:
             try:
                 await handler(update, context)
             except Exception as e:
-                logger.error(f"Error in callback handler for '{data}': {e}", exc_info=True)
+                logger.error(f"Error in callback handler for '{callback_data}': {e}", exc_info=True)
                 response = ResponseBuilder.error("Failed to process your request.")
                 await self.client.send_message(msg=response['text'])
         else:
-            logger.warning(f"No handler found for callback: {data}")
-            response = ResponseBuilder.warning(f"Unknown button: {data}")
+            logger.warning(f"No handler registered for callback_data: '{callback_data}'")
+            response = ResponseBuilder.warning(f"Unknown button: {callback_data}")
             await self.client.send_message(msg=response['text'])
 
 

@@ -75,10 +75,10 @@ logger = logging.getLogger(__name__)
 
 class TrainingMenu(BaseMenu):
     """Training control menu - unified menu definition and handlers"""
-    
+
     def __init__(self, client):
         """Initialize training menu with definition and handlers
-        
+
         Args:
             client: TelegramClient instance
         """
@@ -91,34 +91,34 @@ class TrainingMenu(BaseMenu):
                 ["Back to Main"]
             ]
         )
-    
+
     @callback_handler("Start Training")
     async def handle_start_training(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle start training button"""
         logger.info(f"User {update.effective_user.id} started training")
         response = ResponseBuilder.success("Training started successfully!")
         await self.client.send_message(msg=response['text'])
-    
+
     @callback_handler("Stop Training")
     async def handle_stop_training(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle stop training button"""
         logger.info(f"User {update.effective_user.id} stopped training")
         response = ResponseBuilder.warning("Training stopped")
         await self.client.send_message(msg=response['text'])
-    
+
     @callback_handler("View Progress")
     async def handle_view_progress(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle view progress button"""
         progress = "Training Progress: 75% complete"
         response = ResponseBuilder.info(progress)
         await self.client.send_message(msg=response['text'])
-    
+
     @callback_handler("Back to Main")
     async def handle_back_to_main(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle back to main menu"""
         # Import here to avoid circular imports
         from menus.main_menu import MainMenu
-        
+
         main_menu = MainMenu(self.client)
         await main_menu.show()
 
@@ -268,11 +268,12 @@ The `@callback_handler` decorator automatically finds the callback_data from men
 ```
 
 **How it works:**
+
 1. Decorator receives a label (e.g., "Monitoring And Status")
 2. Searches in menu (default: MAIN_MENU) for button with that label
 3. Extracts the callback_data from that button (e.g., "Monitoring And Status")
 4. Attaches callback_data to the handler function
-5. BaseHandler._register_callbacks() finds all decorated methods and registers them
+5. BaseHandler.\_register_callbacks() finds all decorated methods and registers them
 
 - `patterns=[" ", "-"]` - Replace these characters with `_`
 - `to_remove=["ing", "!"]` - Remove these substrings completely
@@ -362,7 +363,7 @@ class MyMenu(BaseMenu):
                 ["Button 3"]
             ]
         )
-    
+
     @callback_handler("Button 1")
     async def handle_button1(self, update, context):
         # Handler implementation
