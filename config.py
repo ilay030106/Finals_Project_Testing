@@ -14,7 +14,3 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 # Import new menu system
-from config.menus import MAIN_MENU as MAIN_MENU_OBJ
-
-# Legacy dictionary format for backward compatibility
-MAIN_MENU = MAIN_MENU_OBJ.to_dict()
