@@ -35,7 +35,7 @@ class TelegramClient:
         self.last_messages = {}
         
         TelegramClient._initialized = True
-        logger.info(TelegramClientConstants.CLIENT_INIT_SUCCESSFUL)
+        logger.info(TelegramClientConstants.CLIENT_INIT_SUCCESS)
 
     async def send_message(self,msg,chat_id=None,reply_markup=None, parse_mode=None):
         if chat_id is None:
