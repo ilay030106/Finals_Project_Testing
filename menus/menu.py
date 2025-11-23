@@ -104,7 +104,7 @@ class Menu:
             'buttons': self.get_buttons()
         }
     
-    def validate(self) -> bool:
+    def validate_structure(self) -> bool:
         """Validate menu structure
         
         Returns:

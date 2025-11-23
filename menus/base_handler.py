@@ -1,8 +1,8 @@
 """Base handler class for callback registration"""
 from telegram import Update
 from telegram.ext import ContextTypes
+from constants.response_fields import ResponseFields
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -12,16 +12,6 @@ class BaseHandler:
     This class provides the mechanism to automatically register callback handlers.
     When your menu class is instantiated, this scans all methods for the 
     @callback_handler decorator and registers them in app_context.
-    
-    Usage:
-        class MyMenu(BaseHandler):
-            def __init__(self, client):
-                super().__init__(client)
-                # Handlers are now registered automatically
-            
-            @callback_handler("my_button")
-            async def handle_my_button(self, update, context):
-                pass
     """
     
     def __init__(self, client):
@@ -41,12 +31,6 @@ class BaseHandler:
         
         This method scans the instance for methods decorated with @callback_handler
         and registers them in the global app_context registry.
-        
-        Flow:
-            1. Loop through all attributes of the instance
-            2. Check if attribute is a callable method
-            3. Check if method has '_callback_data' attribute (added by decorator)
-            4. Register the method in app_context with its callback_data as key
         """
         from app_context import app_context
         
@@ -81,5 +65,5 @@ class BaseHandler:
             response = ResponseBuilder.error("An error occurred. Please try again.")
             await self.client.send_message(
                 chat_id=update.effective_user.id,
-                msg=response['text']
+                msg=response[ResponseFields.TEXT]
             )

@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class MainMenuConstants(StrEnum):
+class MainMenuFields(StrEnum):
     MONITOR_AND_STATUS="Monitoring And Status"
     TRAINING_CONTROL="Training Control"
     REPORT_AND_VISUAL="Reporting And Visualization"

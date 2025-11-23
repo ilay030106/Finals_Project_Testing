@@ -12,8 +12,7 @@ Finals_Project_Testing/
 │   ├── base_handler.py    # BaseHandler class - callback registration
 │   ├── menu.py            # Menu builder classes
 │   └── main_menu.py       # MainMenu class - unified menu + handlers
-├── state/                  # State management
-│   └── user_session.py    # User sessions
+├── state/                  # State management (simplified)
 ├── config/                 # Configuration
 │   ├── settings.py        # Settings management
 │   └── menus.py           # Legacy menu definitions (being phased out)
@@ -53,8 +52,8 @@ async def handle_new_button(self, update: Update, context: ContextTypes.DEFAULT_
 @command_handler("stats", description="Show bot statistics")
 async def cmd_stats(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show statistics"""
-    stats = f"Active sessions: {len(session_manager.get_all_sessions())}"
-    response = ResponseBuilder.info(stats)
+    user_id = update.effective_user.id
+    response = ResponseBuilder.info(f"Bot is running for user: {user_id}")
     await self.client.send_message(
         chat_id=update.effective_user.id,
         msg=response['text']
@@ -146,27 +145,25 @@ SETTINGS_MENU = Menu("⚙️ Settings") \
 SETTINGS_MENU.validate()
 ```
 
-### Use User Session
+### Use App Context (Single User)
 
 ```python
-from state.user_session import session_manager
+from app_context import app_context
 
-# Get session
-session = session_manager.get_session(user_id, username)
-
-# Store data
-session.set("preferred_language", "en")
-session.set_state("awaiting_report_name")
+# Store user data
+app_context['user_id'] = user_id
+app_context['username'] = username
+app_context['preferred_language'] = 'en'
 
 # Retrieve data
-language = session.get("preferred_language", "en")
+user_id = app_context.get('user_id')
+language = app_context.get('preferred_language', 'en')
 
-# Track menu
-session.set_menu("SETTINGS_MENU")
-
-# Reset session
-session.reset()
+# Clear data
+app_context.clear()
 ```
+
+**Note**: For a single-user bot, `app_context` is sufficient for storing user data and state.
 
 ### Send Different Response Types
 

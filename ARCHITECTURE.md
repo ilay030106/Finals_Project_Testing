@@ -45,7 +45,7 @@ handlers/
 
 ### Structure
 
-```
+````
 menus/
 ├── __init__.py
 ├── base_menu.py         # BaseMenu class - common menu functionality
@@ -57,18 +57,6 @@ handlers/
 ├── __init__.py
 ├── base_handler.py      # Base class with common functionality
 └── menu_handlers.py     # Legacy handlers (being phased out)
-```
-
-### Flow
-
-1. **BaseHandler** provides common functionality:
-
-   - Automatic callback registration via `_register_callbacks()`
-   - Error handling helper methods
-   - Logger access
-   - Reference to TelegramClient
-
-2. **BaseMenu** extends BaseHandler:
 
    - Inherits callback registration from BaseHandler
    - Provides menu setup and display functionality
@@ -81,14 +69,15 @@ handlers/
    menu = Menu("Title")
        .add_button("Label")  # Uses label as callback_data
        .add_row(["Label1", "Label2"])  # Both labels used as callback_data
-   ```
+````
 
-   - Fluent API for building menus
-   - **Labels are used directly as callback_data** (no transformation)
-   - Optional explicit callback_data: `.add_button("Label", "custom_data")`
-   - Validation of menu structure
+- Fluent API for building menus
+- **Labels are used directly as callback_data** (no transformation)
+- Optional explicit callback_data: `.add_button("Label", "custom_data")`
+- Validation of menu structure
 
 4. **Unified Menu Classes** (e.g., MainMenu):
+
    ```python
    class MainMenu(BaseMenu):
        def __init__(self, client):
@@ -106,6 +95,7 @@ handlers/
            # Handler implementation
            pass
    ```
+
    - Each menu class inherits from BaseMenu
    - Defines its own menu structure in `__init__`
    - Implements its own button handlers with `@callback_handler`
@@ -122,49 +112,31 @@ handlers/
 
 ---
 
-## 3. State Management System
+## 3. State Management (Simplified for Single User)
 
 ### Structure
 
+For a single-user bot, the `app_context` provides sufficient state management:
+
+```python
+from app_context import app_context
+
+# Store data
+app_context['user_id'] = user_id
+app_context['username'] = username
+app_context['current_state'] = 'awaiting_input'
+
+# Retrieve data
+user_id = app_context.get('user_id')
+state = app_context.get('current_state', 'idle')
 ```
-state/
-├── __init__.py
-└── user_session.py      # UserSession and SessionManager classes
-```
-
-### Flow
-
-1. **UserSession** (per user):
-
-   - Stores user_id, username
-   - Tracks current_menu and conversation_state
-   - Custom data storage (dict)
-   - Activity tracking with timestamps
-
-2. **SessionManager** (singleton):
-
-   - Manages all user sessions
-   - `get_session(user_id)` - get or create
-   - `cleanup_inactive()` - remove old sessions
-   - Global instance: `session_manager`
-
-3. **Usage**:
-
-   ```python
-   from state.user_session import session_manager
-
-   session = session_manager.get_session(user_id, username)
-   session.set_menu("MAIN_MENU")
-   session.set("last_report", report_data)
-   ```
 
 ### Benefits
 
-- Per-user state isolation
-- Conversation flow tracking
-- Automatic activity tracking
-- Session cleanup for memory management
-- Easy to extend with custom data
+- Simple and lightweight
+- No session overhead for single user
+- Global access when needed
+- Easy to extend
 
 ---
 
@@ -390,9 +362,7 @@ run_polling() - Start bot
 ```
 Telegram → on_callback → cmd_start()
   ↓
-session_manager.get_session(user_id) - Get/create session
-  ↓
-session.set_menu("MAIN_MENU") - Track menu
+app_context['user_id'] = user_id - Store user info
   ↓
 main_menu.show() - Display main menu
   ↓
@@ -411,10 +381,6 @@ User clicks "Monitoring And Status" button
 Telegram sends callback_query with data="Monitoring And Status"
   ↓
 on_callback() receives query
-  ↓
-session_manager.get_session() - Get session
-  ↓
-session.update_activity() - Track activity
   ↓
 app_context.get_callback_handler("Monitoring And Status") - Get handler
   ↓

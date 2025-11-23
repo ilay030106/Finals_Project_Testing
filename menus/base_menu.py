@@ -4,31 +4,13 @@ from menus import Menu
 from utils.response_builder import ResponseBuilder
 from TelegramClient import TelegramClient
 from telegram.constants import ParseMode
+from constants.response_fields import ResponseFields
 
 class BaseMenu(BaseHandler):
     """Base class for all menus - provides menu setup and display functionality.
     
     This class combines menu structure definition with automatic handler registration.
     
-    Usage:
-        class MyMenu(BaseMenu):
-            def __init__(self, client):
-                super().__init__(
-                    client,
-                    "My Menu Title",
-                    [
-                        ["Button 1", "Button 2"],
-                        ["Button 3"]
-                    ]
-                )
-            
-            @callback_handler("Button 1")
-            async def handle_button1(self, update, context):
-                # Handle button 1 click
-                pass
-    
-    The menu buttons use their labels as callback_data by default.
-    So a button with label "Button 1" will send callback_data="Button 1".
     """
     
     def __init__(self, client, title, rows=None):
@@ -45,21 +27,21 @@ class BaseMenu(BaseHandler):
         if rows:
             for row in rows:
                 self.menu.add_row(row)
-        self.menu.validate()
+        self.menu.validate_structure()
         
         # Initialize parent (this will call _register_callbacks() automatically)
         super().__init__(client)
     
-    def add_row(self, row):
+    def add_row_to_keyboard(self, row):
         """Add a button row after initialization
         
         Args:
             row: List of button labels for the row
         """
         self.menu.add_row(row)
-        self.menu.validate()
+        self.menu.validate_structure()
 
-    async def show(self, chat_id: int = None, parse_mode: str = ParseMode.HTML):
+    async def show_menu(self, chat_id: int = None, parse_mode: str = ParseMode.HTML):
         """Display this menu
         
         Args:
@@ -75,7 +57,7 @@ class BaseMenu(BaseHandler):
         
         await self.client.send_message(
             chat_id=chat_id,
-            msg=response['text'],
-            reply_markup=response['keyboard'],
-            parse_mode=response['parse_mode']
+            msg=response[ResponseFields.TEXT],
+            reply_markup=response[ResponseFields.KEYBOARD],
+            parse_mode=response[ResponseFields.PARSE_MODE]
         )
