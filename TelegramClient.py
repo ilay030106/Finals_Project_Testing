@@ -8,6 +8,7 @@ from typing import Iterable, Optional
 from config.settings import get_settings
 from app_context import app_context
 from utils.telegram_client_utils import make_button
+from constants.telegram_client_constants import TelegramClientConstants
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,14 +28,14 @@ class TelegramClient:
             return
         
         if not settings.telegram_bot_token:
-            raise ValueError("Telegram Bot token not found in environment variables")
+            raise ValueError(TelegramClientConstants.BOT_TOKEN_ERROR)
         
         self.app = Application.builder().token(settings.telegram_bot_token).build()
         
         self.last_messages = {}
         
         TelegramClient._initialized = True
-        logger.info("TelegramClient initialized")
+        logger.info(TelegramClientConstants.CLIENT_INIT_SUCCESSFUL)
 
     async def send_message(self,msg,chat_id=None,reply_markup=None, parse_mode=None):
         if chat_id is None:

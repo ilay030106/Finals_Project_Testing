@@ -5,7 +5,7 @@ from menus.base_menu import BaseMenu
 from utils.telegram_client_utils import callback_handler
 from utils.response_builder import ResponseBuilder
 import logging
-
+from constants.main_menu_constants import MainMenuConstants 
 logger = logging.getLogger(__name__)
 
 
@@ -21,14 +21,14 @@ class MainMenu(BaseMenu):
         # Pass title and button structure to BaseMenu
         super().__init__(
             client,
-            "Welcome To The Control Center!\n\nPlease Choose your Action",
+            MainMenuConstants.TITLE,
             [
-                ["Monitoring And Status", "Training Control"],
-                ["Reporting And Visualization", "Settings"]
+                [MainMenuConstants.MONITOR_AND_STATUS, MainMenuConstants.TRAINING_CONTROL],
+                [MainMenuConstants.REPORT_AND_VISUAL, MainMenuConstants.SETTINGS]
             ]
         )
     
-    @callback_handler("Reporting And Visualization")
+    @callback_handler(MainMenuConstants.REPORT_AND_VISUAL)
     async def handle_reports(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle reporting and visualization button
         
@@ -40,7 +40,7 @@ class MainMenu(BaseMenu):
         response = ResponseBuilder.info("You Pressed Button: Reporting And Visualization")
         await self.client.send_message(msg=response['text'])
     
-    @callback_handler("Settings")
+    @callback_handler(MainMenuConstants.SETTINGS)
     async def handle_settings(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle settings button
         
@@ -52,7 +52,7 @@ class MainMenu(BaseMenu):
         response = ResponseBuilder.info("You Pressed Button: Settings")
         await self.client.send_message(msg=response['text'])
     
-    @callback_handler("Monitoring And Status")
+    @callback_handler(MainMenuConstants.MONITOR_AND_STATUS)
     async def handle_monitor_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle monitoring and status button
         
@@ -64,7 +64,7 @@ class MainMenu(BaseMenu):
         response = ResponseBuilder.info("You Pressed Button: Monitoring And Status")
         await self.client.send_message(msg=response['text'])
     
-    @callback_handler("Training Control")
+    @callback_handler(MainMenuConstants.TRAINING_CONTROL)
     async def handle_train_control(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle training control button
         

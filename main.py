@@ -10,6 +10,7 @@ from menus.main_menu import MainMenu
 from utils.logging_config import setup_logging
 from utils.response_builder import ResponseBuilder
 from utils.command_registry import CommandRegistry, command_handler
+from constants.main_client_constants import MainClientConstants
 import logging
 
 # Initialize settings and logging
@@ -44,7 +45,7 @@ class MainClient:
         self.client.add_error_handler(self.on_error)
         self.client.add_callback_query_handler(self.on_callback)
         
-        logger.info("MainClient initialized successfully")
+        logger.info(MainClientConstants.INIT_SUCCESS_MSG)
     
     def _register_commands(self) -> None:
         """Register all command handlers"""
@@ -57,7 +58,7 @@ class MainClient:
         
         logger.info(f"Registered {len(self.command_registry.commands)} commands")
     
-    @command_handler("start", description="Start the bot and show main menu")
+    @command_handler(MainClientConstants.START, description=MainClientConstants.START_DESC)
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command - send main menu
         
@@ -69,8 +70,8 @@ class MainClient:
             return
         
         user_id = update.effective_user.id
-        username = update.effective_user.username or "No username"
-        first_name = update.effective_user.first_name or "No name"
+        username = update.effective_user.username or MainClientConstants.NO_USERNAME
+        first_name = update.effective_user.first_name or MainClientConstants.NO_NAME
         
         # Get or create user session
         # Each user has their own session
@@ -86,7 +87,7 @@ class MainClient:
         # Show main menu using unified menu class
         await self.main_menu.show(chat_id=user_id)
     
-    @command_handler("help", description="Show available commands")
+    @command_handler(MainClientConstants.HELP, description=MainClientConstants.HELP_DESC)
     async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /help command - show available commands
         
@@ -142,7 +143,7 @@ class MainClient:
         logger.error(f"Error occurred: {error}", exc_info=True)
         
         if update and update.effective_user:
-            response = ResponseBuilder.error("An error occurred. Please try again or contact support.")
+            response = ResponseBuilder.error(MainClientConstants.ON_ERROR_MSG)
             try:
                 await self.client.send_message(
                     chat_id=update.effective_user.id,
@@ -186,7 +187,7 @@ class MainClient:
                 await handler(update, context)
             except Exception as e:
                 logger.error(f"Error in callback handler for '{callback_data}': {e}", exc_info=True)
-                response = ResponseBuilder.error("Failed to process your request.")
+                response = ResponseBuilder.error(MainClientConstants.CALLBACK_REQUEST_ERROR)
                 await self.client.send_message(msg=response['text'])
         else:
             logger.warning(f"No handler registered for callback_data: '{callback_data}'")
@@ -195,13 +196,13 @@ class MainClient:
 
 
 if __name__ == "__main__":
-    logger.info("="*50)
+    logger.info(MainClientConstants.DIVIDER)
     logger.info("Starting Telegram Bot...")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"Debug mode: {settings.debug}")
-    logger.info("="*50)
+    logger.info(MainClientConstants.DIVIDER)
     
     main_client = MainClient()
     
-    logger.info("Bot is running. Press Ctrl+C to stop.")
+    logger.info(MainClientConstants.RUNNING_MSG)
     main_client.client.run_polling(drop_pending_updates=True)
