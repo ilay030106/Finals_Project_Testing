@@ -3,7 +3,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Optional
-
+from constants.settings_constants import LogConfigConstants
 
 def setup_logging(
     log_level: str = 'INFO',
@@ -50,9 +50,9 @@ def setup_logging(
         root_logger.addHandler(file_handler)
     
     # Reduce noise from external libraries
-    logging.getLogger('telegram').setLevel(logging.WARNING)
-    logging.getLogger('httpx').setLevel(logging.WARNING)
-    logging.getLogger('httpcore').setLevel(logging.WARNING)
+    logging.getLogger(LogConfigConstants.LOGGER_TELEGRAM).setLevel(logging.WARNING)
+    logging.getLogger(LogConfigConstants.LOGGER_HTTPX).setLevel(logging.WARNING)
+    logging.getLogger(LogConfigConstants.LOGGER_HTTPCORE).setLevel(logging.WARNING)
     
     root_logger.info(f"Logging configured: level={log_level}, file={log_file}")
 

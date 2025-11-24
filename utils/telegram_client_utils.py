@@ -29,13 +29,6 @@ def callback_handler(callback_data: str):
         callback_data: The exact callback_data string that Telegram will send.
                       This should match the button's callback_data exactly.
     
-    Usage:
-        @callback_handler("Monitoring And Status")
-        async def handle_monitoring(self, update, context):
-            # This method will be called when user clicks button with
-            # callback_data="Monitoring And Status"
-            pass
-    
     How it works:
         1. You decorate a method with @callback_handler("some_callback_data")
         2. The decorator attaches callback_data to the method as an attribute

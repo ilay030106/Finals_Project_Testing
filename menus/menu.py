@@ -1,6 +1,7 @@
 """Menu builder system for creating structured inline keyboards"""
 from typing import List, Tuple, Optional, Union
 from dataclasses import dataclass
+from constants.menu_obj_constants import MenuConstants
 import logging
 
 logger = logging.getLogger(__name__)
@@ -93,17 +94,6 @@ class Menu:
         """
         return [[btn.to_tuple() for btn in row] for row in self.rows]
     
-    def to_dict(self) -> dict:
-        """Convert menu to dictionary format (legacy compatibility)
-        
-        Returns:
-            Dictionary with 'title' and 'buttons' keys
-        """
-        return {
-            'title': self.title,
-            'buttons': self.get_buttons()
-        }
-    
     def validate_structure(self) -> bool:
         """Validate menu structure
         
@@ -111,10 +101,10 @@ class Menu:
             True if valid, raises ValueError if invalid
         """
         if not self.title:
-            raise ValueError("Menu must have a title")
+            raise ValueError(MenuConstants.NO_TITLE_ERROR)
         
         if not self.rows:
-            raise ValueError("Menu must have at least one button")
+            raise ValueError(MenuConstants.NO_ROWS_ERROR)
         
         # Check for duplicate callback_data
         callback_data_set = set()

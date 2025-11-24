@@ -1,12 +1,15 @@
 
-from menus.base_handler import BaseHandler
 from menus import Menu
 from utils.response_builder import ResponseBuilder
 from TelegramClient import TelegramClient
 from telegram.constants import ParseMode
 from constants.response_fields import ResponseFields
+from telegram import Update
+from telegram.ext import ContextTypes
+import logging
+logger = logging.getLogger(__name__)
 
-class BaseMenu(BaseHandler):
+class BaseMenu:
     """Base class for all menus - provides menu setup and display functionality.
     
     This class combines menu structure definition with automatic handler registration.
@@ -22,16 +25,63 @@ class BaseMenu(BaseHandler):
             rows: List of button rows, where each row is a list of button labels
                   Example: [["Button 1", "Button 2"], ["Button 3"]]
         """
+        self.client = client
+        self.logger = logger
+        
         # Define menu structure first
         self.menu = Menu(title)
         if rows:
             for row in rows:
                 self.menu.add_row(row)
+
         self.menu.validate_structure()
+
+        self._register_callbacks()
+
         
-        # Initialize parent (this will call _register_callbacks() automatically)
-        super().__init__(client)
+        
+        
+    def _register_callbacks(self) -> None:
+        """Register all decorated callback handlers in app_context.
+        
+        This method scans the instance for methods decorated with @callback_handler
+        and registers them in the global app_context registry.
+        """
+        from app_context import app_context
+        
+        # Scan all methods in this instance
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            
+            # Check if it's a callable method with callback_data attached
+            if callable(attr) and hasattr(attr, '_callback_data'):
+                callback_data = attr._callback_data
+                
+                # Register in global app_context
+                app_context.register_callback(callback_data, attr)
+                
+                self.logger.debug(
+                    f"Registered: {self.__class__.__name__}.{attr_name}() "
+                    f"-> callback_data='{callback_data}'"
+                )
     
+    async def handle_error(self, update: Update, context: ContextTypes.DEFAULT_TYPE, error: Exception) -> None:
+        """Handle errors in a consistent way
+        
+        Args:
+            update: The update that caused the error
+            context: The context object
+            error: The exception that was raised
+        """
+        self.logger.error(f"Error in handler: {error}", exc_info=True)
+        
+        if update and update.effective_user:
+            from utils.response_builder import ResponseBuilder
+            response = ResponseBuilder.error("An error occurred. Please try again.")
+            await self.client.send_message(
+                chat_id=update.effective_user.id,
+                msg=response[ResponseFields.TEXT]
+            )
     def add_row_to_keyboard(self, row):
         """Add a button row after initialization
         

@@ -9,8 +9,9 @@ from menus.main_menu import MainMenu
 from utils.logging_config import setup_logging
 from utils.response_builder import ResponseBuilder
 from utils.command_registry import CommandRegistry, command_handler
-from constants.main_client_constants import MainClientFields
+from constants.main_client_constants import MainClientConstants
 from constants.response_fields import ResponseFields
+from constants.app_context_fields import AppContextFields
 import logging
 
 # Initialize settings and logging
@@ -31,11 +32,8 @@ class MainClient:
         self.client = TelegramClient()
         self.command_registry = CommandRegistry()
         
-        # Initialize menus - each menu is self-contained with handlers
         self.main_menu = MainMenu(self.client)
-        # Add more unified menus here:
-        # self.training_menu = TrainingMenu(self.client)
-        # self.monitoring_menu = MonitoringMenu(self.client)
+
         
         # Register commands
         self._register_commands()
@@ -45,7 +43,7 @@ class MainClient:
         self.client.add_error_handler(self.on_error)
         self.client.add_callback_query_handler(self.on_callback)
         
-        logger.info(MainClientFields.MSGS.INIT_SUCCESS_MSG)
+        logger.info(MainClientConstants.MSGS.INIT_SUCCESS_MSG)
     
     def _register_commands(self) -> None:
         """Register all command handlers"""
@@ -58,7 +56,7 @@ class MainClient:
         
         logger.info(f"Registered {len(self.command_registry.commands)} commands")
     
-    @command_handler(MainClientFields.START, description=MainClientFields.START_DESC)
+    @command_handler(MainClientConstants.START, description=MainClientConstants.START_DESC)
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command - send main menu
         
@@ -70,19 +68,19 @@ class MainClient:
             return
         
         user_id = update.effective_user.id
-        username = update.effective_user.username or MainClientFields.NO_USERNAME
-        first_name = update.effective_user.first_name or MainClientFields.NO_NAME
+        username = update.effective_user.username or MainClientConstants.NO_USERNAME
+        first_name = update.effective_user.first_name or MainClientConstants.NO_NAME
         
         # Store user info in app_context
-        app_context['user_id'] = user_id
-        app_context['username'] = username
+        app_context[AppContextFields.USER_ID] = user_id
+        app_context[AppContextFields.USER_NAME] = username
         
         logger.info(f"User started bot: {user_id} - {username} - {first_name}")
         
         # Show main menu using unified menu class
-        await self.main_menu.show(chat_id=user_id)
+        await self.main_menu.show_menu(chat_id=user_id)
     
-    @command_handler(MainClientFields.HELP, description=MainClientFields.HELP_DESC)
+    @command_handler(MainClientConstants.HELP, description=MainClientConstants.HELP_DESC)
     async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /help command - show available commands
         
@@ -134,7 +132,7 @@ class MainClient:
         logger.error(f"Error occurred: {error}", exc_info=True)
         
         if update and update.effective_user:
-            response = ResponseBuilder.error(MainClientFields.MSGS.ON_ERROR_MSG)
+            response = ResponseBuilder.error(MainClientConstants.MSGS.ON_ERROR_MSG)
             try:
                 await self.client.send_message(
                     chat_id=update.effective_user.id,
@@ -174,7 +172,7 @@ class MainClient:
                 await handler(update, context)
             except Exception as e:
                 logger.error(f"Error in callback handler for '{callback_data}': {e}", exc_info=True)
-                response = ResponseBuilder.error(MainClientFields.MSGS.CALLBACK_REQUEST_ERROR)
+                response = ResponseBuilder.error(MainClientConstants.MSGS.CALLBACK_REQUEST_ERROR)
                 await self.client.send_message(msg=response[ResponseFields.TEXT])
         else:
             logger.warning(f"No handler registered for callback_data: '{callback_data}'")
@@ -183,13 +181,13 @@ class MainClient:
 
 
 if __name__ == "__main__":
-    logger.info(MainClientFields.DIVIDER)
+    logger.info(MainClientConstants.DIVIDER)
     logger.info("Starting Telegram Bot...")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"Debug mode: {settings.debug}")
-    logger.info(MainClientFields.DIVIDER)
+    logger.info(MainClientConstants.DIVIDER)
     
     main_client = MainClient()
     
-    logger.info(MainClientFields.MSGS.RUNNING_MSG)
+    logger.info(MainClientConstants.MSGS.RUNNING_MSG)
     main_client.client.run_polling(drop_pending_updates=True)

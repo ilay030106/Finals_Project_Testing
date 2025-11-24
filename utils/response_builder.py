@@ -1,7 +1,7 @@
 """Response builder for consistent message formatting"""
 from typing import Optional, Dict, Any
 from telegram import InlineKeyboardMarkup
-
+from constants.response_fields import ResponseFields
 
 class ResponseBuilder:
     """Builder for creating consistent bot responses"""
@@ -18,9 +18,9 @@ class ResponseBuilder:
             Response dictionary
         """
         return {
-            'text': f"✅ {message}",
-            'keyboard': keyboard,
-            'parse_mode': None
+            ResponseFields.TEXT: f"✅ {message}",
+            ResponseFields.KEYBOARD: keyboard,
+            ResponseFields.PARSE_MODE: None
         }
     
     @staticmethod
@@ -35,9 +35,9 @@ class ResponseBuilder:
             Response dictionary
         """
         return {
-            'text': f"❌ {message}",
-            'keyboard': keyboard,
-            'parse_mode': None
+            ResponseFields.TEXT: f"❌ {message}",
+            ResponseFields.KEYBOARD: keyboard,
+            ResponseFields.PARSE_MODE: None
         }
     
     @staticmethod
@@ -52,9 +52,9 @@ class ResponseBuilder:
             Response dictionary
         """
         return {
-            'text': f"ℹ️ {message}",
-            'keyboard': keyboard,
-            'parse_mode': None
+            ResponseFields.TEXT: f"ℹ️ {message}",
+            ResponseFields.KEYBOARD: keyboard,
+            ResponseFields.PARSE_MODE: None
         }
     
     @staticmethod
@@ -69,9 +69,9 @@ class ResponseBuilder:
             Response dictionary
         """
         return {
-            'text': f"⚠️ {message}",
-            'keyboard': keyboard,
-            'parse_mode': None
+            ResponseFields.TEXT: f"⚠️ {message}",
+            ResponseFields.KEYBOARD: keyboard,
+            ResponseFields.PARSE_MODE: None
         }
     
     @staticmethod
@@ -94,9 +94,9 @@ class ResponseBuilder:
         """
         text = f"{emoji} {message}" if emoji else message
         return {
-            'text': text,
-            'keyboard': keyboard,
-            'parse_mode': parse_mode
+            ResponseFields.TEXT: text,
+            ResponseFields.KEYBOARD: keyboard,
+            ResponseFields.PARSE_MODE: parse_mode
         }
     
     @staticmethod
@@ -112,7 +112,7 @@ class ResponseBuilder:
             Response dictionary
         """
         return {
-            'text': title,
-            'keyboard': keyboard,
-            'parse_mode': parse_mode
+            ResponseFields.TEXT: title,
+            ResponseFields.KEYBOARD: keyboard,
+            ResponseFields.PARSE_MODE: parse_mode
         }

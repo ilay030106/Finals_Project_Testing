@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class MainClientFields(StrEnum):
+class MainClientConstants(StrEnum):
 
     class MSGS(StrEnum):
         INIT_SUCCESS_MSG="MainClient initialized successfully"
