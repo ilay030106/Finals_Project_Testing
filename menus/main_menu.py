@@ -2,11 +2,11 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from menus.base_menu import BaseMenu
-from utils.telegram_client_utils import callback_handler
 from utils.response_builder import ResponseBuilder
 import logging
 from constants.main_menu_constants import MainMenuFields 
 from constants.response_fields import ResponseFields
+from utils.callback_registry import CallbackRegistry
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +29,7 @@ class MainMenu(BaseMenu):
             ]
         )
     
-    @callback_handler(MainMenuFields.REPORT_AND_VISUAL)
+    @CallbackRegistry.register(MainMenuFields.REPORT_AND_VISUAL)
     async def handle_reports(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle reporting and visualization button
         
@@ -41,7 +41,7 @@ class MainMenu(BaseMenu):
         response = ResponseBuilder.info("You Pressed Button: Reporting And Visualization")
         await self.client.send_message(msg=response[ResponseFields.TEXT])
     
-    @callback_handler(MainMenuFields.SETTINGS)
+    @CallbackRegistry.register(MainMenuFields.SETTINGS)
     async def handle_settings(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle settings button
         
@@ -53,7 +53,7 @@ class MainMenu(BaseMenu):
         response = ResponseBuilder.info("You Pressed Button: Settings")
         await self.client.send_message(msg=response[ResponseFields.TEXT])
     
-    @callback_handler(MainMenuFields.MONITOR_AND_STATUS)
+    @CallbackRegistry.register(MainMenuFields.MONITOR_AND_STATUS)
     async def handle_monitor_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle monitoring and status button
         
@@ -65,7 +65,7 @@ class MainMenu(BaseMenu):
         response = ResponseBuilder.info("You Pressed Button: Monitoring And Status")
         await self.client.send_message(msg=response[ResponseFields.TEXT])
     
-    @callback_handler(MainMenuFields.TRAINING_CONTROL)
+    @CallbackRegistry.register(MainMenuFields.TRAINING_CONTROL)
     async def handle_train_control(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle training control button
         

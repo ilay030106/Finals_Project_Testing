@@ -13,7 +13,7 @@ from constants.main_client_constants import MainClientConstants
 from constants.response_fields import ResponseFields
 from constants.app_context_fields import AppContextFields
 import logging
-
+from utils.callback_registry import CallbackRegistry
 # Initialize settings and logging
 settings = get_settings()
 setup_logging(
@@ -165,18 +165,17 @@ class MainClient:
         
         logger.debug(f"Callback from user {user_id}: '{callback_data}'")
         
-        # Get handler from app_context registry
-        handler = app_context.get_callback_handler(callback_data)
-        if handler:
-            try:
-                await handler(update, context)
-            except Exception as e:
-                logger.error(f"Error in callback handler for '{callback_data}': {e}", exc_info=True)
-                response = ResponseBuilder.error(MainClientConstants.MSGS.CALLBACK_REQUEST_ERROR)
-                await self.client.send_message(msg=response[ResponseFields.TEXT])
-        else:
-            logger.warning(f"No handler registered for callback_data: '{callback_data}'")
-            response = ResponseBuilder.warning(f"Unknown button: {callback_data}")
+        try:
+            found,result = await CallbackRegistry.dispatch(update,context)
+            
+            if not found:
+              logger.warning(f"No handler registered for callback_data: '{callback_data}'")
+              response = ResponseBuilder.warning(f"Unknown button: {callback_data}")
+              await self.client.send_message(msg=response[ResponseFields.TEXT])
+        
+        except Exception as e:
+            logger.error(f"Error in callback handler for '{callback_data}': {e}", exc_info=True)
+            response = ResponseBuilder.error(MainClientConstants.MSGS.CALLBACK_REQUEST_ERROR)
             await self.client.send_message(msg=response[ResponseFields.TEXT])
 
 
