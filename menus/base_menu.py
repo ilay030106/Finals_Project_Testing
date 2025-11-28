@@ -36,34 +36,11 @@ class BaseMenu:
 
         self.menu.validate_structure()
 
-        self._register_callbacks()
 
         
         
         
-    def _register_callbacks(self) -> None:
-        """Register all decorated callback handlers in app_context.
-        
-        This method scans the instance for methods decorated with @callback_handler
-        and registers them in the global app_context registry.
-        """
-        from app_context import app_context
-        
-        # Scan all methods in this instance
-        for attr_name in dir(self):
-            attr = getattr(self, attr_name)
-            
-            # Check if it's a callable method with callback_data attached
-            if callable(attr) and hasattr(attr, '_callback_data'):
-                callback_data = attr._callback_data
-                
-                # Register in global app_context
-                app_context.register_callback(callback_data, attr)
-                
-                self.logger.debug(
-                    f"Registered: {self.__class__.__name__}.{attr_name}() "
-                    f"-> callback_data='{callback_data}'"
-                )
+    
     
     async def handle_error(self, update: Update, context: ContextTypes.DEFAULT_TYPE, error: Exception) -> None:
         """Handle errors in a consistent way
