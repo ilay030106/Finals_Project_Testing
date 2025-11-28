@@ -44,24 +44,28 @@ class CallbackRegistry:
         return None, None
     
     @classmethod
-    async def dispatch(cls, update, context):
+    async def dispatch(cls, update, context, **dependencies):
         """
         Automatically finds and executes the correct callback handler.
-        Works with both sync AND async handlers.
+        Injects dependencies into handlers.
+        
+        Args:
+            update: Telegram update
+            context: Telegram context
+            **dependencies: Dependencies to inject (client, models, etc.)
         """
-
         callback_data = update.callback_query.data
 
         handler, params = cls.resolve(callback_data)
 
         if not handler:
-            return False,None
+            return False, None
 
-        # Ensure the handler can be sync or async
+        # Inject dependencies into handler
         if inspect.iscoroutinefunction(handler):
-            result = await handler(update, context, *params)
+            result = await handler(update, context, *params, **dependencies)
         else:
-            result = handler(update, context, *params)
+            result = handler(update, context, *params, **dependencies)
         
-        return True,result
+        return True, result
 

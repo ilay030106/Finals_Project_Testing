@@ -33,7 +33,10 @@ class MainClient:
         self.command_registry = CommandRegistry()
         
         self.main_menu = MainMenu(self.client)
-
+        
+        # Store in app_context for handlers to access
+        app_context[AppContextFields.CLIENT] = self.client
+        app_context[AppContextFields.MAIN_MENU] = self.main_menu
         
         # Register commands
         self._register_commands()
@@ -142,13 +145,8 @@ class MainClient:
                 logger.error(f"Failed to send error message: {e}")
     
     async def on_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle button callbacks using the callback registry.
-        
-        Flow:
-            1. User clicks a button in Telegram
-            2. Telegram sends callback_query with callback_data (e.g., "Monitoring And Status")
-            3. We look up the handler in app_context using callback_data as the key
-            4. Execute the handler method
+        """
+        Handle Button Callback using a Centralized Callback Registry
         
         Args:
             update: The update object from Telegram
@@ -166,7 +164,13 @@ class MainClient:
         logger.debug(f"Callback from user {user_id}: '{callback_data}'")
         
         try:
-            found,result = await CallbackRegistry.dispatch(update,context)
+            # Pass dependencies explicitly to handlers
+            found, result = await CallbackRegistry.dispatch(
+                update, 
+                context,
+                client=self.client,
+                main_menu=self.main_menu
+            )
             
             if not found:
               logger.warning(f"No handler registered for callback_data: '{callback_data}'")
