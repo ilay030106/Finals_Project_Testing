@@ -6,6 +6,7 @@ from utils.response_builder import ResponseBuilder
 from constants.response_fields import ResponseFields
 from constants.app_context_fields import AppContextFields
 from constants.commands import CommandsFields
+from app_context import app_context
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,9 +19,8 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwa
     Args:
         update: Telegram update
         context: Telegram context
-        **kwargs: Dependencies (main_menu, client)
     """
-    main_menu = kwargs.get(AppContextFields.MAIN_MENU)
+    main_menu = app_context.get(AppContextFields.MAIN_MENU)
     
     if not update.effective_user:
         return
@@ -42,9 +42,8 @@ async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwar
     Args:
         update: Telegram update
         context: Telegram context
-        **kwargs: Dependencies (client)
     """
-    client = kwargs.get(AppContextFields.CLIENT)
+    client = app_context.get(AppContextFields.CLIENT)
     
     if not update.effective_user:
         return

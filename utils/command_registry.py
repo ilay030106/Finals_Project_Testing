@@ -51,7 +51,6 @@ class CommandRegistry:
             command: Command name (without /)
             update: Telegram update
             context: Telegram context
-            **dependencies: Dependencies to inject (client, main_menu, etc.)
             
         Returns:
             Tuple of (found: bool, result)
@@ -63,7 +62,6 @@ class CommandRegistry:
         
         handler = cmd_info[CommandRegistryFields.CALLBACK]
         
-        # Inject dependencies into handler
         if inspect.iscoroutinefunction(handler):
             result = await handler(update, context, **dependencies)
         else:
