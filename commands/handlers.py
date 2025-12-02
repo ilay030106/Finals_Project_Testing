@@ -4,12 +4,14 @@ from telegram.ext import ContextTypes
 from utils.command_registry import CommandRegistry
 from utils.response_builder import ResponseBuilder
 from constants.response_fields import ResponseFields
+from constants.app_context_fields import AppContextFields
+from constants.commands import CommandsFields
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-@CommandRegistry.register("start", description="Start the bot and show main menu")
+@CommandRegistry.register(CommandsFields.START, description=CommandsFields.START_DESC)
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwargs) -> None:
     """Handle /start command - show main menu
     
@@ -18,7 +20,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwa
         context: Telegram context
         **kwargs: Dependencies (main_menu, client)
     """
-    main_menu = kwargs.get('main_menu')
+    main_menu = kwargs.get(AppContextFields.MAIN_MENU)
     
     if not update.effective_user:
         return
@@ -33,7 +35,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwa
         await main_menu.show_menu(chat_id=user_id)
 
 
-@CommandRegistry.register("help", description="Show available commands and help")
+@CommandRegistry.register(CommandsFields.HELP, description=CommandsFields.HELP_DESC)
 async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwargs) -> None:
     """Handle /help command - show available commands
     
@@ -42,7 +44,7 @@ async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwar
         context: Telegram context
         **kwargs: Dependencies (client)
     """
-    client = kwargs.get('client')
+    client = kwargs.get(AppContextFields.CLIENT)
     
     if not update.effective_user:
         return
@@ -63,7 +65,3 @@ async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwar
         )
 
 
-# Add more commands here:
-# @CommandRegistry.register("settings", description="Configure bot settings")
-# async def handle_settings(update, context, **kwargs):
-#     ...

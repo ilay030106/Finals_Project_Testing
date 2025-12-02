@@ -12,6 +12,7 @@ from utils.command_registry import CommandRegistry
 from constants.main_client_constants import MainClientConstants
 from constants.response_fields import ResponseFields
 from constants.app_context_fields import AppContextFields
+from constants.commands import CommandsFields
 import logging
 from utils.callback_registry import CallbackRegistry
 # Initialize settings and logging
@@ -44,8 +45,9 @@ class MainClient:
         self.client.add_text_handler(self.on_text)
         self.client.add_error_handler(self.on_error)
         self.client.add_callback_query_handler(self.on_callback)
-        self.client.add_command_handler('start', self.on_command)
-        self.client.add_command_handler('help', self.on_command)
+        self.client.add_command_handler(CommandsFields.START, self.on_command)
+        self.client.add_command_handler(CommandsFields.HELP, self.on_command)
+        
         
         logger.info(MainClientConstants.MSGS.INIT_SUCCESS_MSG)
 
@@ -80,14 +82,15 @@ class MainClient:
         
         logger.debug(f"Command from user {user_id}: /{command}")
         
+        additional_dependencies={AppContextFields.CLIENT: self.client,
+                                 AppContextFields.MAIN_MENU: self.main_menu}
         try:
             # Dispatch with dependency injection
             found, result = await CommandRegistry.dispatch(
                 command,
                 update,
                 context,
-                client=self.client,
-                main_menu=self.main_menu
+                **additional_dependencies
             )
             
             if not found:
@@ -162,12 +165,12 @@ class MainClient:
         logger.debug(f"Callback from user {user_id}: '{callback_data}'")
         
         try:
-            # Pass dependencies explicitly to handlers
+            # Pass dependencies explicitly to handlers using constants
             found, result = await CallbackRegistry.dispatch(
                 update, 
                 context,
-                client=self.client,
-                main_menu=self.main_menu
+                **{AppContextFields.CLIENT: self.client,
+                   AppContextFields.MAIN_MENU: self.main_menu}
             )
             
             if not found:
