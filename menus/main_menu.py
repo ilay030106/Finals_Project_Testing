@@ -7,6 +7,8 @@ import logging
 from constants.main_menu_constants import MainMenuFields 
 from constants.response_fields import ResponseFields
 from utils.callback_registry import CallbackRegistry
+from app_context import app_context
+from constants.app_context_fields import AppContextFields
 logger = logging.getLogger(__name__)
 
 
@@ -32,45 +34,47 @@ class MainMenu(BaseMenu):
 
 # Standalone handler functions with explicit dependencies
 @CallbackRegistry.register(MainMenuFields.REPORT_AND_VISUAL)
-async def handle_reports(update: Update, context: ContextTypes.DEFAULT_TYPE, client, **kwargs) -> None:
+async def handle_reports(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwargs) -> None:
     """Handle reporting and visualization button
     
     Args:
         update: Telegram update
         context: Telegram context
-        client: TelegramClient instance (injected)
         **kwargs: Additional dependencies
     """
+    client=app_context[AppContextFields.CLIENT]
     logger.info(f"User {update.effective_user.id} requested reports")
     response = ResponseBuilder.info("You Pressed Button: Reporting And Visualization")
     await client.send_message(msg=response[ResponseFields.TEXT])
 
 
 @CallbackRegistry.register(MainMenuFields.SETTINGS)
-async def handle_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, client, **kwargs) -> None:
+async def handle_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwargs) -> None:
     """Handle settings button
     
     Args:
         update: Telegram update
         context: Telegram context
-        client: TelegramClient instance (injected)
         **kwargs: Additional dependencies
     """
+    client=app_context[AppContextFields.CLIENT]
+
     logger.info(f"User {update.effective_user.id} accessed settings")
     response = ResponseBuilder.info("You Pressed Button: Settings")
     await client.send_message(msg=response[ResponseFields.TEXT])
 
 
 @CallbackRegistry.register(MainMenuFields.MONITOR_AND_STATUS)
-async def handle_monitor_status(update: Update, context: ContextTypes.DEFAULT_TYPE, client, **kwargs) -> None:
+async def handle_monitor_status(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwargs) -> None:
     """Handle monitoring and status button
     
     Args:
         update: Telegram update
         context: Telegram context
-        client: TelegramClient instance (injected)
         **kwargs: Additional dependencies (e.g., monitor service)
     """
+    client=app_context[AppContextFields.CLIENT]
+
     logger.info(f"User {update.effective_user.id} requested monitoring")
     response = ResponseBuilder.info("You Pressed Button: Monitoring And Status")
     await client.send_message(msg=response[ResponseFields.TEXT])
@@ -78,17 +82,17 @@ async def handle_monitor_status(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 @CallbackRegistry.register(MainMenuFields.TRAINING_CONTROL)
-async def handle_train_control(update: Update, context: ContextTypes.DEFAULT_TYPE, client, **kwargs) -> None:
+async def handle_train_control(update: Update, context: ContextTypes.DEFAULT_TYPE, **kwargs) -> None:
     """Handle training control button
     
     Args:
         update: Telegram update
         context: Telegram context
-        client: TelegramClient instance (injected)
         **kwargs: Additional dependencies (e.g., trainer, model)
     """
+    client=app_context[AppContextFields.CLIENT]
+
     logger.info(f"User {update.effective_user.id} accessed training control")
     response = ResponseBuilder.info("You Pressed Button: Training Control")
     await client.send_message(msg=response[ResponseFields.TEXT])
-    # Future: trainer = kwargs.get('trainer')
-    # await trainer.start_training()
+

@@ -10,6 +10,7 @@ from app_context import app_context
 from utils.telegram_client_utils import make_button
 from constants.telegram_client_constants import TelegramClientConstants
 import logging
+from constants.app_context_fields import AppContextFields
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -39,7 +40,7 @@ class TelegramClient:
 
     async def send_message(self,msg,chat_id=None,reply_markup=None, parse_mode=None):
         if chat_id is None:
-            chat_id = app_context.get('user_id')
+            chat_id = app_context.get(AppContextFields.USER_ID)
         await self.app.bot.send_message(chat_id=chat_id,
                                         text=msg,
                                         reply_markup=reply_markup

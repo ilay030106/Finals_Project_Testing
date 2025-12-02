@@ -82,15 +82,12 @@ class MainClient:
         
         logger.debug(f"Command from user {user_id}: /{command}")
         
-        additional_dependencies={AppContextFields.CLIENT: self.client,
-                                 AppContextFields.MAIN_MENU: self.main_menu}
         try:
-            # Dispatch with dependency injection
+            # Dispatch command (handlers access app_context directly)
             found, result = await CommandRegistry.dispatch(
                 command,
                 update,
-                context,
-                **additional_dependencies
+                context
             )
             
             if not found:
@@ -162,15 +159,17 @@ class MainClient:
         callback_data = query.data
         user_id = update.effective_user.id
         
+        # Store user info in app_context
+        app_context[AppContextFields.USER_ID] = user_id
+        app_context[AppContextFields.USER_NAME] = update.effective_user.username or MainClientConstants.NO_USERNAME
+        
         logger.debug(f"Callback from user {user_id}: '{callback_data}'")
         
         try:
-            # Pass dependencies explicitly to handlers using constants
+            # Dispatch callback (handlers access app_context directly)
             found, result = await CallbackRegistry.dispatch(
                 update, 
-                context,
-                **{AppContextFields.CLIENT: self.client,
-                   AppContextFields.MAIN_MENU: self.main_menu}
+                context
             )
             
             if not found:
