@@ -8,7 +8,7 @@ from app_context import app_context
 from menus.main_menu import MainMenu
 from utils.logging_config import setup_logging
 from utils.response_builder import ResponseBuilder
-from utils.command_registry import CommandRegistry, command_handler
+from utils.new_command_registry import CommandRegistry
 from constants.main_client_constants import MainClientConstants
 from constants.response_fields import ResponseFields
 from constants.app_context_fields import AppContextFields
@@ -30,7 +30,6 @@ class MainClient:
         """Initialize the main bot client"""
         self.settings = settings
         self.client = TelegramClient()
-        self.command_registry = CommandRegistry()
         
         self.main_menu = MainMenu(self.client)
         
@@ -38,31 +37,29 @@ class MainClient:
         app_context[AppContextFields.CLIENT] = self.client
         app_context[AppContextFields.MAIN_MENU] = self.main_menu
         
-        # Register commands
-        self._register_commands()
+        # Import commands to trigger registration
+        self._import_commands()
         
         # Register telegram handlers
         self.client.add_text_handler(self.on_text)
         self.client.add_error_handler(self.on_error)
         self.client.add_callback_query_handler(self.on_callback)
+        self.client.add_command_handler('start', self.on_command)
+        self.client.add_command_handler('help', self.on_command)
         
         logger.info(MainClientConstants.MSGS.INIT_SUCCESS_MSG)
-        
+
     
-    def _register_commands(self) -> None:
-        """Register all command handlers"""
-        # Auto-register decorated commands
-        self.command_registry.auto_register_from_instance(self)
-        
-        # Register commands with telegram client
-        for cmd, info in self.command_registry.get_all_commands().items():
-            self.client.add_command_handler(cmd, info['handler'])
-        
-        logger.info(f"Registered {len(self.command_registry.commands)} commands")
+    def _import_commands(self) -> None:
+        """Import command modules to trigger handler registration"""
+        try:
+            import commands  # This triggers @CommandRegistry.register decorators
+            logger.info(f"Registered {len(CommandRegistry.commands)} commands")
+        except ImportError as e:
+            logger.warning(f"Failed to import commands module: {e}")
     
-    @command_handler(MainClientConstants.START, description=MainClientConstants.START_DESC)
-    async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle /start command - send main menu
+    async def on_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Unified command dispatcher with dependency injection
         
         Args:
             update: The update object from Telegram
@@ -73,35 +70,35 @@ class MainClient:
         
         user_id = update.effective_user.id
         username = update.effective_user.username or MainClientConstants.NO_USERNAME
-        first_name = update.effective_user.first_name or MainClientConstants.NO_NAME
         
         # Store user info in app_context
         app_context[AppContextFields.USER_ID] = user_id
         app_context[AppContextFields.USER_NAME] = username
         
-        logger.info(f"User started bot: {user_id} - {username} - {first_name}")
+        # Extract command name
+        command = update.message.text.lstrip('/').split()[0] if update.message.text else ''
         
-        # Show main menu using unified menu class
-        await self.main_menu.show_menu(chat_id=user_id)
-    
-    @command_handler(MainClientConstants.HELP, description=MainClientConstants.HELP_DESC)
-    async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle /help command - show available commands
+        logger.debug(f"Command from user {user_id}: /{command}")
         
-        Args:
-            update: The update object from Telegram
-            context: The context object
-        """
-        if not update.effective_user:
-            return
+        try:
+            # Dispatch with dependency injection
+            found, result = await CommandRegistry.dispatch(
+                command,
+                update,
+                context,
+                client=self.client,
+                main_menu=self.main_menu
+            )
+            
+            if not found:
+                logger.warning(f"No handler registered for command: /{command}")
+                response = ResponseBuilder.warning(f"Unknown command: /{command}")
+                await self.client.send_message(msg=response[ResponseFields.TEXT])
         
-        help_text = self.command_registry.generate_help_text()
-        response = ResponseBuilder.info(help_text)
-        
-        await self.client.send_message(
-            chat_id=update.effective_user.id,
-            msg=response[ResponseFields.TEXT]
-        )
+        except Exception as e:
+            logger.error(f"Error handling command /{command}: {e}", exc_info=True)
+            response = ResponseBuilder.error("Failed to execute command")
+            await self.client.send_message(msg=response[ResponseFields.TEXT])
     
     async def on_text(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle text messages
