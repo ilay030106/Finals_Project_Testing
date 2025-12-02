@@ -47,6 +47,7 @@ class MainClient:
         self.client.add_callback_query_handler(self.on_callback)
         
         logger.info(MainClientConstants.MSGS.INIT_SUCCESS_MSG)
+        
     
     def _register_commands(self) -> None:
         """Register all command handlers"""

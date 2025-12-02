@@ -11,9 +11,6 @@ logger = logging.getLogger(__name__)
 
 class BaseMenu:
     """Base class for all menus - provides menu setup and display functionality.
-    
-    This class combines menu structure definition with automatic handler registration.
-    
     """
     
     def __init__(self, client, title, rows=None):
