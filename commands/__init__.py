@@ -1,5 +1,4 @@
 """Command handlers package - import all handlers to trigger registration"""
-from commands.start import handle_start
-from commands.help import handle_help
+from commands.handlers import *
 
-__all__ = ['handle_start', 'handle_help']
+__all__ = []

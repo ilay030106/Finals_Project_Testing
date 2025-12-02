@@ -1,120 +1,100 @@
-"""Command registry decorator for automatic command registration"""
-from typing import Callable, Optional, Dict
-from functools import wraps
+from constants.command_registry_fields import CommandRegistryFields
 import logging
+import inspect
 
 logger = logging.getLogger(__name__)
 
 
-def command_handler(
-    command: str,
-    description: Optional[str] = None,
-    aliases: Optional[list] = None
-):
-    """Decorator to register command handlers automatically
-    
-    Args:
-        command: The command name (without /)
-        description: Optional description for help text
-        aliases: Optional list of command aliases
-    
-    Usage:
-        @command_handler("start", description="Start the bot")
-        async def cmd_start(self, update, context):
-            ...
-    """
-    def decorator(func: Callable):
-        # Attach command metadata to the function
-        func._command = command
-        func._command_description = description or f"Handle /{command} command"
-        func._command_aliases = aliases or []
-        
-        logger.debug(f"Registered command: /{command}")
-        return func
-    return decorator
-
-
 class CommandRegistry:
-    """Registry for managing command handlers"""
     
-    def __init__(self):
-        """Initialize command registry"""
-        self.commands: Dict[str, dict] = {}
-        self.logger = logger
-    
-    def register(self, command: str, handler: Callable, description: Optional[str] = None) -> None:
+    commands = {}
+
+    @classmethod
+    def register(cls, command: str, description: str = None):
         """Register a command handler
         
         Args:
             command: Command name
-            handler: Handler function
-            description: Optional description
+            description: Optional description for help text
+            
         """
-        self.commands[command] = {
-            'handler': handler,
-            'description': description or f"Handle /{command} command"
-        }
-        self.logger.info(f"Registered command: /{command}")
+        def decorator(func):
+            cls.commands[command] = {
+                CommandRegistryFields.DESC: description or f"Handle /{command} command",
+                CommandRegistryFields.CALLBACK: func
+            }
+            logger.debug(f"Registered command: /{command}")
+            return func
+        return decorator
     
-    def get_handler(self, command: str) -> Optional[Callable]:
-        """Get handler for a command
+
+    @classmethod
+    def resolve(cls, command: str):
+        """Get command info by name
         
         Args:
-            command: Command name
+            command: Command name (without /)
             
         Returns:
-            Handler function or None
+            Command info dict or None
         """
-        cmd_info = self.commands.get(command)
-        return cmd_info['handler'] if cmd_info else None
+        return cls.commands.get(command) if command in cls.commands else None   
     
-    def get_all_commands(self) -> Dict[str, dict]:
-        """Get all registered commands
+    @classmethod
+    async def dispatch(cls, command: str, update, context, **dependencies):
+        """Dispatch a command with dependency injection
         
+        Automatically finds and executes the correct command handler.
+        Injects dependencies into handlers.
+        
+        Args:
+            command: Command name (without /)
+            update: Telegram update
+            context: Telegram context
+            **dependencies: Dependencies to inject (client, main_menu, etc.)
+            
         Returns:
-            Dictionary of command -> info
+            Tuple of (found: bool, result)
         """
-        return self.commands.copy()
+        cmd_info = cls.resolve(command)
+        
+        if not cmd_info:
+            return False, None
+        
+        handler = cmd_info[CommandRegistryFields.CALLBACK]
+        
+        # Inject dependencies into handler
+        if inspect.iscoroutinefunction(handler):
+            result = await handler(update, context, **dependencies)
+        else:
+            result = handler(update, context, **dependencies)
+        
+        return True, result
     
-    def generate_help_text(self) -> str:
+    @classmethod
+    def generate_help_text(cls) -> str:
         """Generate help text from registered commands
         
         Returns:
             Formatted help text
         """
-        if not self.commands:
-            return "No commands available."
+        if not cls.commands:
+            return CommandRegistryFields.NO_COMMANDS_AVAILABLE_MSG
         
-        help_lines = ["📋 Available Commands:\n"]
-        for cmd, info in sorted(self.commands.items()):
-            help_lines.append(f"/{cmd} - {info['description']}")
+        help_lines = [CommandRegistryFields.AVAILABLE_COMMAND_MSG]
+        for cmd, info in sorted(cls.commands.items()):
+            help_lines.append(f"/{cmd} - {info[CommandRegistryFields.DESC]}")
         
         return "\n".join(help_lines)
     
-    def auto_register_from_instance(self, instance: object) -> int:
-        """Auto-register all decorated command methods from an instance
+    @classmethod
+    def get_all_commands(cls):
+        """Get all registered commands
         
-        Args:
-            instance: Object instance to scan for decorated methods
-            
         Returns:
-            Number of commands registered
+            Dictionary of command -> info
         """
-        count = 0
-        for attr_name in dir(instance):
-            attr = getattr(instance, attr_name)
-            if callable(attr) and hasattr(attr, '_command'):
-                self.register(
-                    attr._command,
-                    attr,
-                    attr._command_description
-                )
-                
-                # Register aliases
-                for alias in getattr(attr, '_command_aliases', []):
-                    self.register(alias, attr, f"Alias for /{attr._command}")
-                
-                count += 1
+        return cls.commands.copy()
         
-        self.logger.info(f"Auto-registered {count} commands from {instance.__class__.__name__}")
-        return count
+
+        

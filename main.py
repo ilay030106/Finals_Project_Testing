@@ -8,7 +8,7 @@ from app_context import app_context
 from menus.main_menu import MainMenu
 from utils.logging_config import setup_logging
 from utils.response_builder import ResponseBuilder
-from utils.new_command_registry import CommandRegistry
+from utils.command_registry import CommandRegistry
 from constants.main_client_constants import MainClientConstants
 from constants.response_fields import ResponseFields
 from constants.app_context_fields import AppContextFields
